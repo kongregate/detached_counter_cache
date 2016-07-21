@@ -1,4 +1,6 @@
 language: ruby
+before_script:
+  - mysql -e 'create database detached_counter_cache;'
 rvm:
   - 2.3
   - 2.2
