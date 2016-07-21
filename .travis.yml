@@ -2,7 +2,7 @@ language: ruby
 before_script:
   - mysql -e 'create database detached_counter_cache;'
 rvm:
-  - 2.3
+  - 2.3.1
   - 2.2
   - 2.1
 gemfile:
