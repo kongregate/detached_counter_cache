@@ -1,68 +1,68 @@
 module ActiveRecordExtensions
   module DetachedCounterCache
     module Base
-      extend ActiveSupport::Concern
+      def self.prepended(base)
+        base.class_attribute :detached_counter_cache_table_names, :detached_counter_cache_placeholders
+        base.detached_counter_cache_table_names = []
+        base.detached_counter_cache_placeholders = {}
 
-      included do
-        class_attribute :detached_counter_cache_table_names, :detached_counter_cache_placeholders
-        self.detached_counter_cache_table_names = []
-        self.detached_counter_cache_placeholders = {}
-
-        class << self
-          alias_method_chain :update_counters, :detached_counters
-          alias_method_chain :belongs_to, :detached_counters
+        class << base
+          prepend ClassMethods
         end
       end
 
+      def increment!(*args)
+        column, by = args
+        placeholder = self.class.detached_counter_cache_placeholders[column]
+        return super unless placeholder
+
+        self.class.update_counters(id, column => by)
+      end
+
       module ClassMethods
-        def belongs_to_with_detached_counters(association_id, options = {})
+        def belongs_to(association_id, options = {})
           if add_detached_counter_cache = options.delete(:detached_counter_cache)
             placeholder = DetachedCounterCachePlaceholder.new
             options[:counter_cache] = true
           end
 
-          belongs_to_without_detached_counters(association_id, options)
+          super
+          return unless add_detached_counter_cache
 
-          if add_detached_counter_cache
-            reflection = reflections[association_id.to_s]
-            placeholder.reflection = reflection
+          reflection = reflections[association_id.to_s]
+          placeholder.reflection = reflection
 
-            klass = reflection.klass
-            klass.detached_counter_cache_table_names += [placeholder.detached_counter_cache_table_name]
-            klass.detached_counter_cache_placeholders = klass.detached_counter_cache_placeholders.merge(reflection.counter_cache_column.to_s => placeholder)
-          end
+          klass = reflection.klass
+          klass.detached_counter_cache_table_names += [placeholder.detached_counter_cache_table_name]
+          klass.detached_counter_cache_placeholders = klass.detached_counter_cache_placeholders.merge(reflection.counter_cache_column.to_s => placeholder)
         end
 
-        def update_counters_with_detached_counters(id, counters)
+        def update_counters(id, counters)
+          updates = counters.delete_if { |k| k == :touch }
+          record_id = id.is_a?(ActiveRecord::Relation) ? id.first.id : id
           detached_counters = []
-          counters.each do |column_name, value|
+          updates.each do |column_name, value|
             if detached_counter_cache_placeholders.has_key? column_name.to_s
               detached_counters << [detached_counter_cache_placeholders[column_name.to_s], value]
-              counters.delete(column_name)
+              updates.delete(column_name)
             end
           end
 
           detached_counters.each do |placeholder, value|
-            self.connection.execute(<<-SQL
-              INSERT INTO `#{placeholder.detached_counter_cache_table_name}` (#{placeholder.reflection.foreign_key}, count) VALUES (#{id}, #{value})
+            connection.execute(<<-SQL
+              INSERT INTO `#{placeholder.detached_counter_cache_table_name}` (#{placeholder.reflection.foreign_key}, count) VALUES (#{record_id}, #{value})
               ON DUPLICATE KEY UPDATE count = count + #{value}
             SQL
             )
           end
 
-          update_counters_without_detached_counters(id, counters) unless counters.blank?
+          super unless updates.blank?
         end
       end
     end
 
     module HasManyAssociation
-      extend ActiveSupport::Concern
-
-      included do
-        alias_method_chain :count_records, :detached_counters
-      end
-
-      def count_records_with_detached_counters
+      def count_records
         potential_table_name = [@owner.class.table_name, @reflection.klass.table_name, 'counts'].join('_')
 
         if (@owner.class.detached_counter_cache_table_names || []).include?(potential_table_name)
@@ -73,7 +73,7 @@ module ActiveRecordExtensions
             @owner.id
           )
         else
-          count_records_without_detached_counters
+          super
         end
       end
     end
@@ -93,5 +93,5 @@ module ActiveRecordExtensions
   end
 end
 
-ActiveRecord::Base.send( :include, ActiveRecordExtensions::DetachedCounterCache::Base )
-ActiveRecord::Associations::HasManyAssociation.send( :include, ActiveRecordExtensions::DetachedCounterCache::HasManyAssociation )
+ActiveRecord::Base.send(:prepend, ActiveRecordExtensions::DetachedCounterCache::Base)
+ActiveRecord::Associations::HasManyAssociation.send(:prepend, ActiveRecordExtensions::DetachedCounterCache::HasManyAssociation)

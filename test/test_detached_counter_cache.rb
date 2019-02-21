@@ -50,4 +50,18 @@ class DetachedCounterCacheTest < Minitest::Test
     assert_equal 5, user.comments.size
     assert_equal 0, user.comments.count
   end
+
+  def test_non_detached_counter_works_properly
+    user = User.create
+    user.likes.create
+    user.likes.create
+
+    assert_equal 2, user.likes.size
+    assert_equal 2, user.likes.count
+    assert_equal 2, user.likes_count
+
+    user.likes.destroy_all
+
+    assert_equal 0, user.reload.likes_count
+  end
 end
