@@ -21,6 +21,7 @@ module ActiveRecordExtensions
 
       module ClassMethods
         def belongs_to(association_id, options = {})
+          puts ">>>> Belongs To: #{association_id.inspect} / options: #{options.inspect}"
           if add_detached_counter_cache = options.delete(:detached_counter_cache)
             placeholder = DetachedCounterCachePlaceholder.new
             options[:counter_cache] = true
@@ -38,6 +39,7 @@ module ActiveRecordExtensions
         end
 
         def update_counters(id, counters)
+          puts ">>>> Update Counters: #{id.inspect} / #{counters.inspect}"
           updates = counters.delete_if { |k| k == :touch }
           record_id = id.is_a?(ActiveRecord::Relation) ? id.first.id : id
           detached_counters = []
@@ -63,6 +65,7 @@ module ActiveRecordExtensions
 
     module HasManyAssociation
       def count_records
+        puts ">>>> Count Records (HasManyAssociation)"
         potential_table_name = [@owner.class.table_name, @reflection.klass.table_name, 'counts'].join('_')
 
         if (@owner.class.detached_counter_cache_table_names || []).include?(potential_table_name)
@@ -82,11 +85,13 @@ module ActiveRecordExtensions
       attr_accessor :reflection
 
       def detached_counter_cache_table_name
+        puts ">>>> Detached Counter Cache"
         [reflection.klass.table_name, reflection.active_record.table_name, 'counts'].join('_')
       end
     end
 
     def self.count_from_connection(connection, potential_table_name, foreign_key, owner_id)
+      puts ">>>> Detached Count From Connection"
       row = connection.select_all("SELECT count FROM `#{potential_table_name}` WHERE #{foreign_key} = #{owner_id}")[0]
       row.blank? ? 0 : row['count'].to_i
     end
