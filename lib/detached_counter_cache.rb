@@ -39,7 +39,7 @@ module ActiveRecordExtensions
         end
 
         def update_counters(id, counters)
-          puts "--> update counters (detached): #{id}/#{counter}"
+          puts "--> update counters (detached): #{id}/#{counters}"
           updates = counters.delete_if { |k| k == :touch }
           record_id = id.is_a?(ActiveRecord::Relation) ? id.first.id : id
           detached_counters = []
