@@ -21,6 +21,7 @@ module ActiveRecordExtensions
 
       module ClassMethods
         def belongs_to(association_id, options = {})
+          puts "--> belongs to: #{associated_id}"
           if add_detached_counter_cache = options.delete(:detached_counter_cache)
             placeholder = DetachedCounterCachePlaceholder.new
             options[:counter_cache] = true
@@ -38,6 +39,7 @@ module ActiveRecordExtensions
         end
 
         def update_counters(id, counters)
+          puts "--> update counters (detached): #{id}/#{counter}"
           updates = counters.delete_if { |k| k == :touch }
           record_id = id.is_a?(ActiveRecord::Relation) ? id.first.id : id
           detached_counters = []
