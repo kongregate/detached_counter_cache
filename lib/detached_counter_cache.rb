@@ -52,7 +52,7 @@ module ActiveRecordExtensions
 
           detached_counters.each do |placeholder, value|
             connection.execute(<<-SQL
-              INSERT INTO `#{placeholder.detached_counter_cache_table_name}` (#{placeholder.reflection.foreign_key}, count) VALUES (#{record_id}, #{value})
+              INSERT INTO \`#{placeholder.detached_counter_cache_table_name}\` (#{placeholder.reflection.foreign_key}, count) VALUES (#{record_id}, #{value})
               ON DUPLICATE KEY UPDATE count = count + #{value}
             SQL
             )
