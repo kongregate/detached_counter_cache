@@ -52,7 +52,9 @@ module ActiveRecordExtensions
           record_id = id.is_a?(ActiveRecord::Relation) ? id.first.id : id
           detached_counters = []
           updates.each do |column_name, value|
+            puts "Update column #{column_name} / #{value}"
             if detached_counter_cache_placeholders.has_key? column_name.to_s
+              puts "adding detached counter cache to list #{detached_counter_cache_placeholders.has_key?} / #{column_name.to_s}"
               detached_counters << [detached_counter_cache_placeholders[column_name.to_s], value]
               updates.delete(column_name)
             end
@@ -77,6 +79,8 @@ module ActiveRecordExtensions
       def count_records
         potential_table_name = [@owner.class.table_name, @reflection.klass.table_name, 'counts'].join('_')
 
+        puts "Owner Detached Names: #{@owner.class.detached_counter_cache_table_names}"
+        puts "Potential Detached Table Name: #{potential_table_name}"
         if (@owner.class.detached_counter_cache_table_names || []).include?(potential_table_name)
           DetachedCounterCache.count_from_connection(
             @owner.class.connection,
