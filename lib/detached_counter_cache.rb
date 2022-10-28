@@ -30,6 +30,7 @@ module ActiveRecordExtensions
           end
 
           super
+          puts "---> Options after super:#{options}"
           return unless add_detached_counter_cache
 
           puts "continue because add_detached_counter_cache is true or exists"
