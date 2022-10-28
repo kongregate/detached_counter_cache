@@ -22,9 +22,9 @@ module ActiveRecordExtensions
       module ClassMethods
         def belongs_to(association_id, options = {})
           puts "--> belongs to: #{association_id}"
-          puts "---> Add Detached Counter Cache: #{add_detached_counter_cache}"
           puts "---> Options: #{options}"
           if add_detached_counter_cache = options.delete(:detached_counter_cache)
+            puts "add detached cache counter == options detached_counter_cache"
             placeholder = DetachedCounterCachePlaceholder.new
             options[:counter_cache] = true
           end
@@ -32,6 +32,7 @@ module ActiveRecordExtensions
           super
           return unless add_detached_counter_cache
 
+          puts "continue because add_detached_counter_cache is true or exists"
           reflection = reflections[association_id.to_s]
           placeholder.reflection = reflection
 
