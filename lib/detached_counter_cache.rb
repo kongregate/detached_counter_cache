@@ -22,6 +22,8 @@ module ActiveRecordExtensions
       module ClassMethods
         def belongs_to(association_id, options = {})
           puts "--> belongs to: #{association_id}"
+          puts "---> Add Detached Counter Cache: #{add_detached_counter_cache}"
+          puts "---> Options: #{options}"
           if add_detached_counter_cache = options.delete(:detached_counter_cache)
             placeholder = DetachedCounterCachePlaceholder.new
             options[:counter_cache] = true
