@@ -35,10 +35,14 @@ module ActiveRecordExtensions
           puts "continue because add_detached_counter_cache is true or exists"
           reflection = reflections[association_id.to_s]
           placeholder.reflection = reflection
+          puts "---> placeholder: #{placeholder.inspect}"
 
           klass = reflection.klass
           klass.detached_counter_cache_table_names += [placeholder.detached_counter_cache_table_name]
           klass.detached_counter_cache_placeholders = klass.detached_counter_cache_placeholders.merge(reflection.counter_cache_column.to_s => placeholder)
+          puts "---> KLASS: #{klass.inspect}"
+          puts "---> klass detached counter cache table names: #{klass.detached_counter_cache_table_names}"
+          puts "---> klass placeholders: #{klass.detached_counter_cache_placeholders}"
         end
 
         def update_counters(id, counters)
