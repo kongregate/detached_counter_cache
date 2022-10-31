@@ -14,7 +14,6 @@ module ActiveRecordExtensions
       def increment!(*args)
         column, by = args
         placeholder = self.class.detached_counter_cache_placeholders[column]
-        puts "updating increment: #{placeholder.inspect} (super if is nil)"
         return super unless placeholder
 
         self.class.update_counters(id, column => by)
