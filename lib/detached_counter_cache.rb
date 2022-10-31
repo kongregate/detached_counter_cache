@@ -14,6 +14,7 @@ module ActiveRecordExtensions
       def increment!(*args)
         column, by = args
         placeholder = self.class.detached_counter_cache_placeholders[column]
+        puts "dcc increment placeholder: #{placeholder.inspect}"
         return super unless placeholder
 
         self.class.update_counters(id, column => by)
@@ -58,6 +59,7 @@ module ActiveRecordExtensions
               detached_counters << [detached_counter_cache_placeholders[column_name.to_s], value]
               updates.delete(column_name)
             end
+            puts "done updating column"
           end
 
           puts "--> detached counters: #{detached_counters}"
